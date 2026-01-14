@@ -132,7 +132,7 @@
     }
     .popup.minimized .content{ display: none; }
 
-    .popIn{ animation: popIn .68s cubic-bezier(.2,.9,.2,1) both; }
+    .popIn{ animation: popIn .72s cubic-bezier(.2,.9,.2,1) both; }
     @keyframes popIn{
       from{ opacity: 0; transform: translate(-50%, -50%) scale(.82); }
       to{ opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -183,22 +183,25 @@
     const nickname = (params.get('name') || "宝宝").trim() || "宝宝";
     const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 520;
 
-    const totalPopups = 200; // 你要“200条”
+    // 你要“200条”
+    const totalPopups = 200;
+
+    // “轮廓更清”：轮廓点少一些更像线条（可用 ?heart=70 调）
     const heartPopups = Math.min(
       totalPopups,
       Math.max(10, Number(params.get('heart') || (isMobile ? 56 : 120)))
     );
 
-    // 越大越慢：你要慢一点，默认就给慢
-    const defaultSpeed = isMobile ? 95 : 80;
+    // 越大越慢：你要慢一点（可用 ?speed=120 调更慢）
+    const defaultSpeed = isMobile ? 120 : 95;
     const appearIntervalMs = Math.max(12, Number(params.get('speed') || defaultSpeed));
 
     // 散落与“散落后收起可点开”
     const scatterEnabled = (params.get('scatter') ?? '1') !== '0';
     const minimizeAfterScatter = (params.get('min') ?? '1') !== '0';
-    const scatterDelayMs = Math.max(0, Number(params.get('scatterDelay') || (isMobile ? 3200 : 2200)));
-    const scatterDurationMs = Math.max(200, Number(params.get('scatterDuration') || (isMobile ? 900 : 1000)));
-    const extraSpawnGapMs = Math.max(0, Number(params.get('extraGap') || (isMobile ? 20 : 14)));
+    const scatterDelayMs = Math.max(0, Number(params.get('scatterDelay') || (isMobile ? 3400 : 2400)));
+    const scatterDurationMs = Math.max(200, Number(params.get('scatterDuration') || (isMobile ? 950 : 1050)));
+    const extraSpawnGapMs = Math.max(0, Number(params.get('extraGap') || (isMobile ? 22 : 16)));
 
     // 顶部/底部预留：有固定栏挡住就用 ?top=120
     const topReserve = Math.max(0, Number(params.get('top') || 0));
@@ -224,6 +227,7 @@
       return a || 1;
     }
 
+    // 让“出现过程”也像心：按跳步顺序铺满整圈
     function spreadOrder(n) {
       if (n <= 1) return [0];
       let step = Math.floor(n / 2);
@@ -242,26 +246,26 @@
     // 200条“文字不重复”：组合生成，确保每条唯一
     function generateUniqueMessages(total, name) {
       const A = [
-        "我想你了", "我好想你", "我在想你", "我又想你了", "我一直在想你",
-        "我真的很喜欢你", "我特别想你", "我忍不住想你", "我想抱抱你", "我想亲亲你",
-        "我想见你", "我想听你声音", "我想和你说话", "我想把你抱紧", "我想靠近你",
-        "我想把你宠坏", "我想把你护好", "我想把你放在心上", "我想把你写进今天", "我想把你藏进梦里",
+        "我想你了","我好想你","我在想你","我又想你了","我一直在想你",
+        "我真的很喜欢你","我特别想你","我忍不住想你","我想抱抱你","我想亲亲你",
+        "我想见你","我想听你声音","我想和你说话","我想把你抱紧","我想靠近你",
+        "我想把你宠坏","我想把你护好","我想把你放在心上","我想把你写进今天","我想把你藏进梦里",
       ];
 
       const B = [
-        "记得喝水", "好好吃饭", "别熬夜", "别逞强", "累了就休息",
-        "不开心就说", "难受就来找我", "出门注意安全", "到家告诉我一声", "别想太多",
-        "把自己照顾好", "今天也要开心一点",
+        "记得喝水","好好吃饭","别熬夜","别逞强","累了就休息",
+        "不开心就说","难受就来找我","出门注意安全","到家告诉我一声","别想太多",
+        "把自己照顾好","今天也要开心一点",
       ];
 
       const C = [
-        "我在这儿", "我一直在", "我会陪着你", "我会听你说", "我会抱紧你",
-        "我会更懂你", "我会好好爱你", "我会让你安心", "我会给你偏爱", "我会站在你这边",
+        "我在这儿","我一直在","我会陪着你","我会听你说","我会抱紧你",
+        "我会更懂你","我会好好爱你","我会让你安心","我会给你偏爱","我会站在你这边",
       ];
 
       const D = [
-        "好不好", "听话", "别怕", "抱抱", "亲亲",
-        "我等你", "想你", "晚安", "我爱你", "我在",
+        "好不好","听话","别怕","抱抱","亲亲",
+        "我等你","想你","晚安","我爱你","我在",
       ];
 
       const msgs = [];
@@ -281,9 +285,9 @@
         }
       }
 
-      // 兜底：理论上不会触发（组合数足够大），但保证永远够total且不重复
+      // 兜底：保证永远够total且不重复
       let guard = 0;
-      while (msgs.length < total && guard++ < total * 10) {
+      while (msgs.length < total && guard++ < total * 20) {
         const s = `我想你了，${name}。这是给你的第${msgs.length + 1}个小心动。`;
         if (!seen.has(s)) {
           seen.add(s);
@@ -311,7 +315,7 @@
 
     // 弧长查表（等距取点更“像”更稳）
     let cachedLUT = null;
-    function getHeartLUT(samples = 3000) {
+    function getHeartLUT(samples = 3200) {
       if (cachedLUT && cachedLUT.samples === samples) return cachedLUT;
 
       const points = new Array(samples + 1);
@@ -506,7 +510,7 @@
 
         dragging = true;
         el.classList.add('dragging');
-        el.setPointerCapture(e.pointerId);
+        el.setPointerCapture?.(e.pointerId);
 
         bringToFront(el);
         el.style.transition = '';
@@ -564,7 +568,14 @@
 
       const messages = generateUniqueMessages(totalPopups, nickname);
       let msgIndex = 0;
-      const nextText = () => messages[msgIndex++ % messages.length];
+      const nextText = () => {
+        if (msgIndex >= messages.length) {
+          const n = msgIndex + 1;
+          msgIndex++;
+          return `我想你了，${nickname}。这是给你的第${n}个小心动。`;
+        }
+        return messages[msgIndex++];
+      };
 
       const W = innerWidth;
       const H = innerHeight;
@@ -572,11 +583,11 @@
       const { w: popupW, h: popupH } = measurePopupSize();
       const margin = 10;
 
-      const lut = getHeartLUT(3000);
+      const lut = getHeartLUT(3200);
 
-      // 更像：顶部更展开、底部更尖
-      const xStretchBase = isMobile ? 1.38 : 1.16;
-      const yStretchBase = isMobile ? 1.16 : 1.06;
+      // 更像：顶部更展开、底部更尖（强一点）
+      const xStretchBase = isMobile ? 1.42 : 1.18;
+      const yStretchBase = isMobile ? 1.18 : 1.07;
 
       // 用“有效占位”避免 fit 压扁
       const effectiveW = popupW * 0.58;
@@ -594,7 +605,7 @@
       const centerX = W / 2;
       const centerY = topReserve + availH / 2 + (isMobile ? 6 : 10);
 
-      // “轮廓更清”：默认单圈；想加厚可 ?rings=3
+      // 轮廓更清：默认单圈；想加厚可 ?rings=3
       const rings = clampInt(Number(params.get('rings') || 1), 1, 5);
       const ringOffsetsPx = ringOffsetsFromCount(rings);
       const ringCount = ringOffsetsPx.length;
@@ -613,13 +624,13 @@
         for (const p of pts) {
           const yRel = (p.y - lut.midY) / (lut.height / 2);
 
-          // yRel < 0 为下半部分：X收窄 + Y拉长 => 底部更尖
-          // yRel > 0 为上半部分：X略展开 => 两瓣更明显
-          const bottomNarrow = clamp(1 + yRel * 0.60, 0.45, 1.08); // yRel=-1 => 0.45
-          const topWiden = clamp(1 + yRel * 0.20, 0.92, 1.26);
+          // 下半部分：X更收窄、Y更拉长 => 底部更尖
+          // 上半部分：X略展开 => 两瓣更明显
+          const bottomNarrow = clamp(1 + yRel * 0.65, 0.42, 1.06);
+          const topWiden = clamp(1 + yRel * 0.22, 0.92, 1.28);
 
           const xStretch = xStretchBase * (yRel < 0 ? bottomNarrow : topWiden);
-          const yStretch = yStretchBase * (yRel < 0 ? 1.22 : 1.03);
+          const yStretch = yStretchBase * (yRel < 0 ? 1.26 : 1.03);
 
           const dx = (p.x - lut.midX) * scale * xStretch;
           const dy = (p.y - lut.midY) * scale * yStretch;
@@ -634,7 +645,7 @@
           nx /= nl; ny /= nl;
 
           const cx = centerX + dx + nx * off;
-          const cy = centerY - dy - ny * off; // y轴翻转
+          const cy = centerY - dy - ny * off;
 
           outlineItems.push({ cx, cy });
         }
@@ -653,45 +664,49 @@
         order++;
 
         schedule(token, () => {
-          created.push(makePopup({
-            cx, cy,
-            text,
-            z,
-            minimized: false
-          }));
+          created.push(makePopup({ cx, cy, text, z, minimized: false }));
         }, delay);
       }
 
       const lastDelay = Math.max(0, (order - 1) * appearIntervalMs);
 
+      function spawnRemainingPopups(startDelayMs, minimized) {
+        const need = Math.max(0, totalPopups - outlineItems.length);
+        const halfW = popupW / 2;
+        const halfH = popupH / 2;
+
+        for (let k = 0; k < need; k++) {
+          schedule(token, () => {
+            const x = rand(halfW + margin, innerWidth - halfW - margin);
+            const y = rand(halfH + margin, innerHeight - halfH - margin);
+            makePopup({
+              cx: x,
+              cy: y,
+              text: nextText(),
+              z: 10 + order++,
+              minimized
+            });
+          }, startDelayMs + k * extraSpawnGapMs);
+        }
+      }
+
       if (scatterEnabled) {
         schedule(token, () => {
           scatteredOnce = true;
 
+          // 散落前先收起（避免 200 个全尺寸糊屏），散落后点标题栏展开阅读
           if (minimizeAfterScatter) {
             for (const el of created) setMinimized(el, true);
           }
 
           scatterPopups(token, created, scatterDurationMs);
 
-          const need = Math.max(0, totalPopups - outlineItems.length);
-          const halfW = popupW / 2;
-          const halfH = popupH / 2;
-
-          for (let k = 0; k < need; k++) {
-            schedule(token, () => {
-              const x = rand(halfW + margin, innerWidth - halfW - margin);
-              const y = rand(halfH + margin, innerHeight - halfH - margin);
-              makePopup({
-                cx: x,
-                cy: y,
-                text: nextText(),
-                z: 10 + order++,
-                minimized: minimizeAfterScatter && scatteredOnce
-              });
-            }, k * extraSpawnGapMs);
-          }
+          // 其余弹窗：散落后直接以“收起”状态生成
+          spawnRemainingPopups(0, minimizeAfterScatter && scatteredOnce);
         }, lastDelay + scatterDelayMs);
+      } else {
+        // 即使关闭散落，也保证凑够 200 条
+        spawnRemainingPopups(lastDelay + 200, false);
       }
     }
 
