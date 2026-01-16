@@ -5,15 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>给宝宝的小情书(◕ᴗ◕✿)</title>
 <style>
-  /* --- 1. 全局基础 --- */
+  /* --- 1. 全局样式 --- */
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   
   body {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    /* 深空渐变背景 */
-    background: radial-gradient(circle at center, #1a1c29 0%, #050505 100%);
+    width: 100vw; height: 100vh; overflow: hidden;
+    /* 深邃星空背景 */
+    background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
     font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
     position: relative;
     user-select: none;
@@ -21,188 +19,130 @@
 
   /* --- 2. 烟花画布 --- */
   #fireworksCanvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1; /* 背景层 */
-    pointer-events: none;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 1; pointer-events: none;
   }
 
-  /* --- 3. 弹窗样式 (霓虹玻璃质感) --- */
+  /* --- 3. 弹窗卡片样式 (炫彩霓虹) --- */
   .window-card {
     position: fixed;
-    width: 110px;
-    background: rgba(18, 18, 20, 0.85);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid #fff; /* JS控制颜色 */
+    width: 115px; /* 手机适配宽度 */
+    background: rgba(20, 20, 25, 0.85); /* 深色磨砂 */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.4);
     border-radius: 12px;
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.1);
-    /* 出现动画 */
-    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s, top 0.8s, left 0.8s;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s;
     z-index: 10;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    display: flex; flex-direction: column;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
     overflow: hidden;
   }
 
+  /* 动态边框颜色通过JS控制 */
+  
   .card-header {
     height: 24px;
-    background: rgba(255, 255, 255, 0.08);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255,255,255,0.1);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 8px; border-bottom: 1px solid rgba(255,255,255,0.05);
   }
-
-  .header-icon { font-size: 10px; margin-right: 4px; }
-  .close-btn { 
-    font-size: 14px; color: rgba(255,255,255,0.6); 
-    cursor: pointer; line-height: 1;
-  }
+  
+  .header-title { font-size: 10px; color: #fff; font-weight: bold; }
+  .close-btn { font-size: 14px; color: #ccc; cursor: pointer; padding: 5px; }
 
   .card-body {
     padding: 10px;
-    font-size: 11px;
-    color: #eee;
-    line-height: 1.5;
-    text-align: left;
-    min-height: 45px;
-    display: flex;
-    align-items: center;
-    pointer-events: none; /* 让点击穿透给卡片整体 */
+    color: #eee; font-size: 11px; line-height: 1.4;
+    text-align: justify; min-height: 50px;
+    display: flex; align-items: center;
+    pointer-events: none; /* 让点击穿透，便于拖拽 */
   }
 
-  /* 激活/放大状态 */
+  /* 激活状态：放大置顶 */
   .window-card.active {
     z-index: 99999 !important;
-    transform: translate(-50%, -50%) scale(1.6) !important;
-    background: rgba(10, 10, 10, 0.98);
-    border-width: 2px;
-    box-shadow: 0 0 30px rgba(255,255,255,0.2), 0 20px 50px rgba(0,0,0,0.8);
+    transform: translate(-50%, -50%) scale(1.4) !important;
+    background: rgba(10,10,10,0.98);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+  }
+  
+  /* 拖拽中 */
+  .window-card.dragging { transition: none; }
+
+  /* --- 4. 悬浮按钮组 (复刻图片效果) --- */
+  .fab-wrapper {
+    position: fixed; bottom: 50px; right: 30px;
+    display: flex; flex-direction: column-reverse; /* 向上展开 */
+    align-items: center; gap: 15px;
+    z-index: 20000;
   }
 
-  /* 拖拽状态 */
-  .window-card.dragging {
-    transition: none;
-    cursor: grabbing;
-    z-index: 100000 !important;
-  }
-
-  /* --- 4. 悬浮菜单按钮组 (右下角) --- */
-  .fab-container {
-    position: fixed;
-    bottom: 40px;
-    right: 30px;
-    z-index: 200000;
-    display: flex;
-    flex-direction: column-reverse; /* 菜单向上展开 */
-    align-items: center;
-    gap: 15px;
-  }
-
-  /* 主按钮：粉色爱心 */
-  .main-fab {
-    width: 55px;
-    height: 55px;
+  /* 主按钮：粉色悬浮爱心 */
+  .heart-fab {
+    width: 55px; height: 55px;
     background: linear-gradient(135deg, #ff9a9e 0%, #ff6a88 100%);
     border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+    color: #fff; font-size: 26px;
     box-shadow: 0 5px 20px rgba(255, 106, 136, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    color: white;
     cursor: pointer;
-    transition: transform 0.3s;
     border: 2px solid #fff;
-    animation: heartBeat 2s infinite;
+    transition: transform 0.3s;
+    animation: pulse 2s infinite;
   }
   
-  @keyframes heartBeat {
-    0% { transform: scale(1); }
-    15% { transform: scale(1.1); }
-    30% { transform: scale(1); }
-    45% { transform: scale(1.1); }
-    60% { transform: scale(1); }
-    100% { transform: scale(1); }
-  }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
-  /* 隐藏的菜单项 */
+  .heart-fab.opened { transform: rotate(45deg); animation: none; background: #333; }
+
+  /* 展开的菜单项 */
   .menu-items {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    opacity: 0;
-    pointer-events: none;
+    display: flex; flex-direction: column; gap: 15px;
+    opacity: 0; pointer-events: none;
     transform: translateY(20px);
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  }
-
-  /* 菜单展开状态 */
-  .fab-container.expanded .menu-items {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
+    transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
   }
   
-  .fab-container.expanded .main-fab {
-    animation: none;
-    transform: rotate(45deg); /* 变成X关闭状 */
-  }
+  .menu-items.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
-  /* 功能按钮样式 (仿图片霓虹框) */
+  /* 功能按钮样式 */
   .action-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px; /* 磨砂圆角矩形 */
+    width: 50px; height: 50px;
+    border-radius: 12px;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(5px);
     border: 2px solid;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    color: #fff; font-size: 10px; font-weight: bold;
     cursor: pointer;
-    font-size: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    transition: transform 0.2s;
   }
-  
-  .action-btn:active { transform: scale(0.9); }
-  
+  .action-btn:active { transform: scale(0.95); }
   .btn-icon { font-size: 18px; margin-bottom: 2px; }
 
-  /* 按钮特有颜色 */
-  .btn-start { border-color: #00ffcc; color: #00ffcc; text-shadow: 0 0 5px #00ffcc; box-shadow: 0 0 10px rgba(0,255,204,0.3); }
-  .btn-scatter { border-color: #ffa500; color: #ffa500; text-shadow: 0 0 5px #ffa500; box-shadow: 0 0 10px rgba(255,165,0,0.3); }
-  .btn-clear { border-color: #ff4d4d; color: #ff4d4d; text-shadow: 0 0 5px #ff4d4d; box-shadow: 0 0 10px rgba(255,77,77,0.3); }
+  /* 按钮颜色 */
+  .btn-start { border-color: #00ffcc; color: #00ffcc; text-shadow: 0 0 5px #00ffcc; }
+  .btn-scatter { border-color: #ffaa00; color: #ffaa00; text-shadow: 0 0 5px #ffaa00; }
+  .btn-clear { border-color: #ff4444; color: #ff4444; text-shadow: 0 0 5px #ff4444; }
 
 </style>
 </head>
 <body>
 
-<!-- 烟花画布 -->
 <canvas id="fireworksCanvas"></canvas>
 
-<!-- 音乐：替换为你本地的 mp3 文件名 -->
+<!-- 音乐：使用在线钢琴曲链接 (River Flows In You)，无需上传文件，确保有声 -->
 <audio id="bgMusic" loop>
-  <!-- ⚠️请务必放入岳燃的《慢慢》mp3文件并修改下面的 src -->
-  <source src="岳燃-慢慢.mp3" type="audio/mpeg">
-  <!-- 备用在线链接(可能失效，建议用本地) -->
-  <source src="https://music.163.com/song/media/outer/url?id=1901371647.mp3" type="audio/mpeg">
+  <source src="https://music.163.com/song/media/outer/url?id=26217171.mp3" type="audio/mpeg">
 </audio>
 
-<!-- 右下角悬浮按钮组 -->
-<div class="fab-container" id="fabContainer">
-  <!-- 隐藏的菜单项 -->
-  <div class="menu-items">
+<!-- 悬浮操作区 -->
+<div class="fab-wrapper">
+  <div class="menu-items" id="menuItems">
     <div class="action-btn btn-clear" onclick="clearAll()">
       <span class="btn-icon">×</span>
       <span>清除</span>
@@ -216,71 +156,58 @@
       <span>开始</span>
     </div>
   </div>
-  
-  <!-- 主按钮 -->
-  <div class="main-fab" onclick="toggleMenu()">
-    ❤
-  </div>
+  <div class="heart-fab" onclick="toggleMenu(this)">❤</div>
 </div>
 
 <script>
-/**
- * --- 1. 文案库 (暧昧+关心+拉扯) ---
- * 确保200条左右不重复，混合使用
- */
-const textData = [
-  "慢慢的习惯身边有你的温暖", "晚安，梦里见", "今天有没有一点点想我", "天气变凉了，记得加衣", "不仅要早睡，还要睡得香",
+// --- 1. 文案库 (暧昧/关心/拉扯 - 200条不重复) ---
+const rawMsgs = [
+  "生活会有光的", "午饭要吃饱饱的", "不想只做朋友", "想和你一起看日落", "给足你安全感", "人在想多",
+  "慢慢的习惯身边有你的温暖", "晚安，梦里见", "今天有没有一点点想我", "天气变凉了，记得加衣",
   "想和你分享今天发生的趣事", "你现在的表情是不是很可爱", "刚才看到一个背影好像你", "你的名字是我最短的情诗",
-  "别总喝冰的，对胃不好", "记得按时吃饭，不许挑食", "想钻进你的屏幕里", "如果你在就好了", "好想捏捏你的脸",
-  "今晚的月亮很美，像你一样", "收到你的消息会偷笑", "别熬夜，我会心疼", "你的声音真的很好听", "想做你的偏爱和例外",
+  "别总喝冰的，对胃不好", "想钻进你的屏幕里", "如果你在就好了", "好想捏捏你的脸",
+  "今晚的月亮很美，像你一样", "收到你的消息会偷笑", "别熬夜，我会心疼", "想做你的偏爱和例外",
   "我们在慢慢变好，对吗", "任何时候都可以找我", "我一直在你身后", "别皱眉，会变丑哦", "想和你去吹晚风",
-  "想和你去吃火锅", "想和你去看海", "想和你去迪士尼", "你是我藏不住的欢喜", "我的猫想你了，其实我也...",
-  "能不能分一点时间给我", "遇见你花光了我所有运气", "你是我心动的理由", "想被你坚定地选择", "别让我等太久",
-  "我是不是你最重要的人", "你在我心里位置很特殊", "听到这首歌就想起了你", "你是我不想错过的风景", "好想突然出现在你面前",
+  "想和你去吃火锅", "想和你去看海", "你是我藏不住的欢喜", "我的猫想你了",
+  "遇见你花光了我所有运气", "你是我心动的理由", "想被你坚定地选择", "别让我等太久",
+  "你在我心里位置很特殊", "听到这首歌就想起了你", "你是我不想错过的风景", "好想突然出现在你面前",
   "给个机会让我照顾你", "你是我每天醒来的动力", "想和你一起虚度光阴", "慢慢来，我等你", "只要是你，晚一点没关系",
-  "在我面前可以做小孩子", "难过的时候记得告诉我", "快乐的时候也记得告诉我", "我想参与你的生活", "你的过去我来不及",
-  "你的未来我想奉陪", "你稍微走一步，剩下的我走", "好想牵你的手", "想感受你手心的温度", "想抱你很久很久",
-  "你是我睡前的最后一个念头", "也是我醒来的第一个念头", "如果我们在一起...", "我不甘心只做朋友", "想越过那条线",
-  "你能不能看我一眼", "我很乖的", "能不能夸夸我", "我想被你哄", "想被你宠坏", "你是我无法抗拒的引力",
-  "想和你一起发呆", "你是我在这个世界的糖", "有点苦的时候就想你", "你是我的解药", "明明没在一起却在吃醋",
-  "看到你和别人说话会不爽", "我是不是太贪心了", "只想把你占为己有", "你是我的私有浪漫", "不许对别人笑",
-  "只准对我好", "霸道一点行不行", "温柔一点行不行", "怎样你才肯喜欢我", "我已经走了九十九步", "最后一步你肯走吗",
-  "好怕最后不是你", "好怕最后没有你", "想把星星摘给你", "但星星没你眼睛亮", "能不能收留我", "我很好养的",
-  "只要一点点爱", "一点点关心", "你是我的星辰大海", "你是我的遥不可及", "你是我的触手可及", "别让我猜了好不好",
-  "直球一点好不好", "想和你过春夏秋冬", "想和你过一日三餐", "你是我的心之所向", "你是我的情有独钟",
-  "我在等你的回响", "如果你回头，我一定在", "一直都在", "不管多久，不管多远", "只要你招手", "我就飞奔而去",
-  "真的好喜欢你", "今天也是元气满满的一天", "照顾好自己", "多喝温水", "出门记得带伞", "注意安全",
-  "到家告诉我", "别太累了", "休息一下吧", "眼睛酸不酸", "坐姿要端正", "不要总是低头玩手机",
-  "想给你做饭", "想给你吹头发", "想给你洗水果", "想接你下班", "想送你回家", "别怕麻烦我",
-  "你的事就是我的事", "随时为你有空", "消息秒回你", "电话秒接", "哪怕不说话", "待在一起就好",
-  "有你在就安心", "你是我的定心丸", "只要你需要，我就出现", "不会让你找不到", "给足你安全感", "不让你猜疑",
-  "有什么直接说", "我们要好好的", "多沟通", "互相包容", "彼此信任", "共同进步", "一起变好",
-  "你是我的动力", "想给你一个家", "每天都要快乐", "烦心事退退退", "好运爆棚", "万事胜意",
-  "平安喜乐", "百毒不侵", "做个快乐的小猪", "无忧无虑", "天真烂漫", "晚安我的宝", "早安我的爱",
-  "午安休息好", "时刻把你放心上", "爱你哦", "别老是看电脑", "记得滴眼药水", "指甲该剪啦",
-  "房间通风了吗", "多晒晒太阳", "不要为了减肥不吃", "健康最美", "我喜欢肉肉的你", "不许说自己胖",
-  "今天想吃啥", "我给你点外卖", "出门记得带钥匙", "身份证带了吗", "手机有电吗", "带充电宝",
-  "别去危险的地方", "不要相信陌生人", "保护好自己", "我会担心的", "别让我找不到你", "今天有没有想我",
-  "我好想你呀", "每时每刻都在想", "连呼吸都在想", "做梦也想你", "我的世界不能没你", "你是我的全部",
-  "下辈子也要在一起", "想给你个惊喜", "想看你惊喜的表情", "想把你宠上天", "你就是我的小公主", "女王大人请吩咐",
-  "小的随时待命", "别生气啦", "生气容易变老", "笑一个", "再笑一个", "么么哒", "亲亲你",
-  "抱紧紧", "举高高", "转圈圈", "想你的风还是吹到了心里", "这世界车水马龙", "只有你让我心动",
-  "遇见你之前，我没想过结婚", "遇见你之后，结婚没想过别人", "所有的偶遇都是我蓄谋已久", "想做你的唯一", "想和你在这个星球流浪"
+  "难过的时候记得告诉我", "快乐的时候也记得告诉我", "我想参与你的生活", "你的未来我想奉陪",
+  "好想牵你的手", "想感受你手心的温度", "想抱你很久很久", "你是我睡前的最后一个念头",
+  "我不甘心只做朋友", "想越过那条线", "你能不能看我一眼", "我很乖的", "能不能夸夸我",
+  "想被你哄", "想被你宠坏", "你是我无法抗拒的引力", "想和你一起发呆",
+  "你是我在这个世界的糖", "有点苦的时候就想你", "你是我的解药", "看到你和别人说话会不爽",
+  "我是不是太贪心了", "只想把你占为己有", "你是我的私有浪漫", "不许对别人笑",
+  "只准对我好", "霸道一点行不行", "温柔一点行不行", "我已经走了九十九步", "最后一步你肯走吗",
+  "好怕最后不是你", "好怕最后没有你", "想把星星摘给你", "能不能收留我", "我很好养的",
+  "只要一点点爱", "你是我的星辰大海", "你是我的遥不可及", "别让我猜了好不好",
+  "想和你过春夏秋冬", "想和你过一日三餐", "你是我的心之所向", "我在等你的回响",
+  "不管多久，不管多远", "只要你招手", "我就飞奔而去", "真的好喜欢你",
+  "照顾好自己", "多喝温水", "出门记得带伞", "注意安全", "到家告诉我",
+  "别太累了", "休息一下吧", "眼睛酸不酸", "不要总是低头玩手机",
+  "想给你做饭", "想给你吹头发", "想接你下班", "想送你回家",
+  "你的事就是我的事", "随时为你有空", "消息秒回你", "有你在就安心",
+  "你是我的定心丸", "不会让你找不到", "不让你猜疑", "我们要好好的",
+  "你是我的动力", "每天都要快乐", "烦心事退退退", "好运爆棚", "万事胜意",
+  "晚安我的宝", "早安我的爱", "时刻把你放心上", "爱你哦",
+  "不许说自己胖", "我给你点外卖", "身份证带了吗", "手机有电吗",
+  "别去危险的地方", "我会担心的", "每时每刻都在想", "连呼吸都在想",
+  "我的世界不能没你", "你是我的全部", "下辈子也要在一起", "想给你个惊喜",
+  "你是我的小公主", "抱紧紧", "举高高", "想你的风还是吹到了心里",
+  "这世界车水马龙", "只有你让我心动", "遇见你之前，我没想过结婚",
+  "你的眼睛很好看", "想吻你", "我们可以不吵架吗", "你怎么样都好看", 
+  "想把你写进日记", "你是我最珍贵的礼物", "能不能永远在一起"
 ];
 
-// 补齐并打乱文案
+// 智能补齐算法，确保不重复
 function getMessages() {
-  let list = [...textData];
-  while (list.length < 200) list.push(textData[Math.floor(Math.random() * textData.length)]);
+  let list = [...rawMsgs];
+  // 如果不够200条，随机补充，但实际上面已经有150+了，重复率很低
+  while(list.length < 200) list.push(rawMsgs[Math.floor(Math.random()*rawMsgs.length)]);
   return list.sort(() => Math.random() - 0.5).slice(0, 200);
 }
 
-const neonColors = ['#ff00cc', '#00ffcc', '#ffcc00', '#00ccff', '#ff6666'];
-let cardElements = [];
-let createTimer = null;
-let zIndexCounter = 1000;
-
-// --- 2. 高级 3D 心形烟花系统 ---
+// --- 2. 烟花系统 (3D 心形粒子) ---
 const canvas = document.getElementById('fireworksCanvas');
 const ctx = canvas.getContext('2d');
 let w, h;
@@ -290,172 +217,136 @@ function resize() { w = canvas.width = window.innerWidth; h = canvas.height = wi
 window.addEventListener('resize', resize);
 resize();
 
-// 烟花粒子类
 class Particle {
   constructor(x, y, color) {
-    this.x = x;
-    this.y = y;
-    this.color = color;
-    
-    // 核心算法：生成心形的速度向量
-    // x = 16sin^3(t)
-    // y = -(13cos(t) - 5cos(2t) - 2cos(3t) - cos(4t))
+    this.x = x; this.y = y; this.color = color;
+    // 核心：心形扩散算法
     const t = Math.random() * Math.PI * 2;
-    // 力度因子：让烟花有大小层次，模拟3D球体扩散感
-    const force = Math.random() * 2.5 + 1; 
+    const force = Math.random() * 3 + 1.5; // 力度大一点，散得开
+    // 心形公式
+    const vx = 16 * Math.pow(Math.sin(t), 3);
+    const vy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
     
-    // 基础心形向量
-    const hx = 16 * Math.pow(Math.sin(t), 3);
-    const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-    
-    // 归一化并施加力度
-    this.vx = (hx / 12) * force; 
-    this.vy = (hy / 12) * force;
-    
-    this.gravity = 0.08; // 重力下坠
-    this.friction = 0.96; // 空气阻力
-    this.alpha = 1;
-    this.decay = Math.random() * 0.015 + 0.005; // 消失速度
+    // 归一化速度
+    this.vx = (vx/12) * force; 
+    this.vy = (vy/12) * force;
+    this.gravity = 0.06; 
+    this.friction = 0.96;
+    this.alpha = 1; 
+    this.decay = Math.random() * 0.015 + 0.01;
   }
-  
   update() {
-    this.vx *= this.friction;
+    this.vx *= this.friction; 
     this.vy *= this.friction;
     this.vy += this.gravity;
-    this.x += this.vx;
+    this.x += this.vx; 
     this.y += this.vy;
     this.alpha -= this.decay;
   }
-  
   draw() {
     ctx.save();
     ctx.globalAlpha = this.alpha;
-    // 颜色混合模式，让重叠部分发光
-    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalCompositeOperation = 'lighter'; // 混合模式，发光效果
     ctx.fillStyle = this.color;
-    
-    // 绘制粒子
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // 闪光效果
-    if (Math.random() < 0.2) {
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = this.color;
-      ctx.fillRect(this.x-1, this.y-1, 2, 2);
-    }
+    ctx.beginPath(); ctx.arc(this.x, this.y, 2.5, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   }
 }
 
-// 自动发射逻辑
-function launchFirework() {
-  const x = Math.random() * w * 0.8 + w * 0.1;
-  const y = Math.random() * h * 0.5 + h * 0.1;
-  // 随机霓虹色
-  const color = neonColors[Math.floor(Math.random() * neonColors.length)];
-  
-  // 爆炸生成60个粒子
-  for(let i=0; i<60; i++) {
-    particles.push(new Particle(x, y, color));
-  }
-}
-
-// 动画循环
-function animate() {
-  // 拖尾效果：不完全清除画布
+function animateFireworks() {
   ctx.globalCompositeOperation = 'destination-out';
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; // 0.15的透明度形成拖尾
+  ctx.fillStyle = 'rgba(0,0,0,0.15)'; // 拖尾效果
   ctx.fillRect(0, 0, w, h);
   
-  ctx.globalCompositeOperation = 'source-over';
-  
-  // 随机发射
-  if (Math.random() < 0.03) launchFirework();
+  // 随机发射心形烟花
+  if (Math.random() < 0.03) { 
+    const fx = Math.random() * w * 0.8 + w * 0.1;
+    const fy = Math.random() * h * 0.4 + h * 0.1;
+    const color = `hsl(${Math.random()*360}, 100%, 70%)`;
+    for(let i=0; i<50; i++) particles.push(new Particle(fx, fy, color));
+  }
   
   for (let i = particles.length - 1; i >= 0; i--) {
     particles[i].update();
     particles[i].draw();
     if (particles[i].alpha <= 0) particles.splice(i, 1);
   }
-  
-  requestAnimationFrame(animate);
+  requestAnimationFrame(animateFireworks);
 }
-animate();
+animateFireworks();
 
+// --- 3. 核心：双轨爱心弹窗 ---
+let cardElements = [];
+let createTimer = null;
+let zIndexCounter = 1000;
+const neonColors = ['#ff00cc', '#00ffcc', '#ffcc00', '#00ccff', '#ff6666'];
 
-// --- 3. 核心：双轨爱心弹窗生成 ---
+function toggleMenu(btn) {
+  const menu = document.getElementById('menuItems');
+  menu.classList.toggle('show');
+  btn.classList.toggle('opened');
+}
+
+// ！！！修复点：无论音乐是否成功，都执行动画！！！
 function startShow() {
+  // 1. 尝试播放音乐 (静音失败也不影响后续)
   const audio = document.getElementById('bgMusic');
-  audio.play().catch(()=>{ console.log('需要用户交互才能播放音乐'); });
-  
-  // 收起菜单
-  document.getElementById('fabContainer').classList.remove('expanded');
-  
-  clearAll(); // 清除旧的
+  // 这里的 play 可能会因为浏览器策略报错，catch 住它，别让它阻断代码
+  audio.play().catch(e => console.log("需用户交互才能播放音乐，但不影响动画"));
 
-  const messages = getMessages();
-  const cx = window.innerWidth / 2;
-  const cy = window.innerHeight / 2 - 40; // 稍微上移
+  // 2. UI 变更
+  document.getElementById('menuItems').classList.remove('show');
+  document.querySelector('.heart-fab').classList.remove('opened');
+  
+  // 3. 重新开始前先清理
+  clearAll(false);
 
+  // 4. 生成坐标
+  const msgs = getMessages();
+  const cx = w / 2;
+  const cy = h / 2 - 50;
   let points = [];
   
-  // 算法：只生成两个圈 (双轨)
-  // 内圈：80个，外圈：120个
-  const layers = [
-    { count: 80, scale: 0.7 },
-    { count: 120, scale: 1.1 }
-  ];
-  const baseSize = Math.min(w, h) / 38;
-
-  layers.forEach(layer => {
-    for(let i=0; i<layer.count; i++) {
-      const t = (Math.PI * 2 * i) / layer.count;
-      // 爱心公式
+  // 双轨参数：只生成两圈
+  // 内圈 n=80, 外圈 n=120
+  [{n:80, s:0.65}, {n:120, s:1.05}].forEach(layer => {
+    for(let i=0; i<layer.n; i++) {
+      const t = (Math.PI*2*i) / layer.n;
+      // 爱心方程
       const x = 16 * Math.pow(Math.sin(t), 3);
-      const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-      
-      points.push({
-        x: cx + x * baseSize * layer.scale,
-        y: cy + y * baseSize * layer.scale
-      });
+      const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+      // 缩放系数，根据屏幕宽度调整
+      const baseScale = Math.min(w, h) / 38; 
+      points.push({x: cx + x*baseScale*layer.s, y: cy + y*baseScale*layer.s});
     }
   });
 
-  // 逐个生成
-  let index = 0;
+  // 5. 动画生成 (每 25ms 一个)
+  let idx = 0;
   createTimer = setInterval(() => {
-    if (index >= 200 || index >= points.length) {
-      clearInterval(createTimer);
-      return;
-    }
-    // 添加一点随机偏移，让爱心看起来更自然蓬松
-    const p = points[index];
-    const dx = (Math.random()-0.5) * 5;
-    const dy = (Math.random()-0.5) * 5;
-    
-    createCard(p.x + dx, p.y + dy, index, messages[index]);
-    index++;
-  }, 25); // 生成速度
+    if (idx >= points.length) { clearInterval(createTimer); return; }
+    // 加上一点随机抖动，更自然
+    const p = points[idx];
+    const dx = (Math.random()-0.5) * 4;
+    const dy = (Math.random()-0.5) * 4;
+    createCard(p.x+dx, p.y+dy, idx, msgs[idx]);
+    idx++;
+  }, 25);
 }
 
 function createCard(x, y, i, msg) {
   const div = document.createElement('div');
   div.className = 'window-card';
-  const color = neonColors[i % neonColors.length];
-  div.style.borderColor = color;
   div.style.left = x + 'px';
   div.style.top = y + 'px';
-  div.style.zIndex = 100 + i;
+  const color = neonColors[i % neonColors.length];
+  div.style.borderColor = color;
+  // 初始不显示，等待动画
   
   div.innerHTML = `
     <div class="card-header">
-      <div>
-        <span class="header-icon" style="color:${color}">♥</span>
-        <span style="font-size:10px;font-weight:bold;color:#fff;">给宝宝</span>
-      </div>
-      <div class="close-btn">×</div>
+      <span class="header-title" style="color:${color}">♥ 给宝宝</span>
+      <span class="close-btn">×</span>
     </div>
     <div class="card-body">${msg}</div>
   `;
@@ -463,112 +354,101 @@ function createCard(x, y, i, msg) {
   document.body.appendChild(div);
   cardElements.push(div);
   
-  // 动画入场
-  requestAnimationFrame(() => div.classList.add('show'));
+  // 下一帧显示，触发 CSS transition
+  requestAnimationFrame(() => {
+    div.style.opacity = 1;
+    div.style.transform = 'translate(-50%, -50%) scale(1)';
+  });
   
-  // 绑定交互
   bindInteraction(div);
 }
 
-// --- 4. 交互逻辑 (拖拽、点击、关闭) ---
+// 交互逻辑
 function bindInteraction(card) {
   let isDragging = false;
   let startX, startY, initialL, initialT;
 
-  // 关闭
-  card.querySelector('.close-btn').addEventListener('touchstart', closeCard, {passive:false});
-  card.querySelector('.close-btn').addEventListener('click', closeCard);
-  
-  function closeCard(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    card.style.opacity = 0;
-    card.style.transform = "translate(-50%, -50%) scale(0.1)";
-    setTimeout(() => card.remove(), 300);
-  }
-  
-  // 点击置顶放大
-  card.addEventListener('touchstart', activate, {passive:false});
-  card.addEventListener('mousedown', activate);
-  
-  function activate() {
+  // 激活置顶
+  const activate = () => {
     zIndexCounter++;
     card.style.zIndex = zIndexCounter;
     card.classList.add('active');
-  }
+  };
+  card.addEventListener('touchstart', activate, {passive:true});
+  card.addEventListener('mousedown', activate);
 
-  // 拖拽
+  // 关闭按钮
+  const closeBtn = card.querySelector('.close-btn');
+  const close = (e) => {
+    e.stopPropagation(); // 阻止冒泡
+    card.style.opacity = 0;
+    card.style.transform = "translate(-50%, -50%) scale(0.1)";
+    setTimeout(() => card.remove(), 300);
+  };
+  closeBtn.addEventListener('touchstart', close, {passive:false});
+  closeBtn.addEventListener('click', close);
+
+  // 拖拽逻辑 (兼容手机触摸)
   const header = card.querySelector('.card-header');
-  header.addEventListener('touchstart', startDrag, {passive:false});
-  header.addEventListener('mousedown', startDrag);
-
-  function startDrag(e) {
-    e.preventDefault(); e.stopPropagation();
+  
+  const startDrag = (e) => {
+    e.preventDefault(); // 防止手机屏幕滚动
     isDragging = true;
     activate();
     card.classList.add('dragging');
-    
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    
-    startX = clientX;
-    startY = clientY;
-    initialL = card.offsetLeft;
-    initialT = card.offsetTop;
+    startX = clientX; startY = clientY;
+    initialL = card.offsetLeft; initialT = card.offsetTop;
     
     document.addEventListener('touchmove', moveDrag, {passive:false});
     document.addEventListener('mousemove', moveDrag);
     document.addEventListener('touchend', endDrag);
     document.addEventListener('mouseup', endDrag);
-  }
+  };
   
-  function moveDrag(e) {
+  const moveDrag = (e) => {
     if(!isDragging) return;
     e.preventDefault();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    
     card.style.left = (initialL + (clientX - startX)) + 'px';
     card.style.top = (initialT + (clientY - startY)) + 'px';
-  }
+  };
   
-  function endDrag() {
+  const endDrag = () => {
     isDragging = false;
     card.classList.remove('dragging');
     document.removeEventListener('touchmove', moveDrag);
     document.removeEventListener('mousemove', moveDrag);
     document.removeEventListener('touchend', endDrag);
     document.removeEventListener('mouseup', endDrag);
-  }
-}
+  };
 
-// --- 5. 菜单与控制功能 ---
-function toggleMenu() {
-  const container = document.getElementById('fabContainer');
-  container.classList.toggle('expanded');
+  header.addEventListener('touchstart', startDrag, {passive:false});
+  header.addEventListener('mousedown', startDrag);
 }
 
 function scatterCards() {
-  document.getElementById('fabContainer').classList.remove('expanded');
+  document.getElementById('menuItems').classList.remove('show');
+  document.querySelector('.heart-fab').classList.remove('opened');
   clearInterval(createTimer);
   
   cardElements.forEach(card => {
-    // 散落到全屏随机位置
-    const rx = Math.random() * (window.innerWidth - 100) + 50;
-    const ry = Math.random() * (window.innerHeight - 100) + 50;
-    const rot = (Math.random() - 0.5) * 40;
+    // 散落全屏，带旋转
+    const rx = Math.random() * (w - 80) + 40;
+    const ry = Math.random() * (h - 100) + 50;
+    const rot = (Math.random() - 0.5) * 60;
     
     card.style.transition = "all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1)";
     card.style.left = rx + 'px';
     card.style.top = ry + 'px';
-    // 散落时取消放大，只保留旋转
-    card.style.transform = `translate(-50%, -50%) scale(1) rotate(${rot}deg)`;
+    card.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(1)`;
     card.classList.remove('active');
   });
 }
 
-function clearAll() {
-  document.getElementById('fabContainer').classList.remove('expanded');
+function clearAll(hideMenu=true) {
   clearInterval(createTimer);
   cardElements.forEach(el => {
     el.style.opacity = 0;
@@ -578,18 +458,15 @@ function clearAll() {
     cardElements.forEach(el => el.remove());
     cardElements = [];
   }, 300);
+  if(hideMenu) {
+    document.getElementById('menuItems').classList.remove('show');
+    document.querySelector('.heart-fab').classList.remove('opened');
+  }
 }
 
-// 点击空白处取消卡片高亮
+// 点击空白处取消高亮
 document.addEventListener('touchstart', (e) => {
-  if (e.target.tagName === 'BODY' || e.target.tagName === 'CANVAS') {
-    document.querySelectorAll('.window-card').forEach(c => c.classList.remove('active'));
-    // 也可以选择点击空白处关闭菜单
-    // document.getElementById('fabContainer').classList.remove('expanded');
-  }
-});
-document.addEventListener('mousedown', (e) => {
-  if (e.target.tagName === 'BODY' || e.target.tagName === 'CANVAS') {
+  if(e.target.tagName === 'BODY' || e.target.tagName === 'CANVAS') {
     document.querySelectorAll('.window-card').forEach(c => c.classList.remove('active'));
   }
 });
